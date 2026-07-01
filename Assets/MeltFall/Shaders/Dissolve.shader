@@ -85,20 +85,25 @@ Shader "MeltFall/Dissolve"
 
             half4 frag(Varyings IN) : SV_Target
             {
-                // Procedural noise driven by UV so it works on any mesh; scaled by _NoiseScale.
-                float noise = ValueNoise(IN.uv * _NoiseScale);
-
-                // Carve away the dissolved region.
-                float edge = noise - _Cutoff;
-                clip(edge);
-
                 half3 color = _BaseColor.rgb;
 
-                // Glow the thin band just above the cutoff toward the edge color.
-                if (_EdgeWidth > 0.0)
+                // Only dissolve once melting has begun. At rest (_Cutoff <= 0) the piece is a
+                // fully solid block — no clipping, no edge glow (avoids pocked/holey faces).
+                if (_Cutoff > 0.0)
                 {
-                    float edgeT = 1.0 - saturate(edge / _EdgeWidth);
-                    color = lerp(color, _DissolveColor.rgb, edgeT);
+                    // Procedural noise driven by UV so it works on any mesh; scaled by _NoiseScale.
+                    float noise = ValueNoise(IN.uv * _NoiseScale);
+
+                    // Carve away the dissolved region.
+                    float edge = noise - _Cutoff;
+                    clip(edge);
+
+                    // Glow the thin band just above the cutoff toward the edge color.
+                    if (_EdgeWidth > 0.0)
+                    {
+                        float edgeT = 1.0 - saturate(edge / _EdgeWidth);
+                        color = lerp(color, _DissolveColor.rgb, edgeT);
+                    }
                 }
 
                 return half4(color, 1.0);

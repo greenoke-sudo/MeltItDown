@@ -20,8 +20,9 @@ MonoBehaviour:
   settleTime: 0.5
   coneHalfAngleDegrees: 25
   coneReach: 20
+  sprayRadius: 0.6
   gemAngularDragBoost: 2
-  cameraTiltDegrees: 35
+  cameraTiltDegrees: 10
   parallaxMax: 0.75
   landingSlowMoScale: 0.35
   landingSlowMoSeconds: 0.4
