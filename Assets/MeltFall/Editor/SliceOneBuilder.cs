@@ -161,9 +161,6 @@ namespace MeltFall.EditorTools
 
             Debug.Log("[MeltFall] Slice 1 grey-box built at " + ScenePath +
                       ". Press Play, then hold the mouse on the sand pillar to melt it — the gem should drop and land in the safe zone.");
-            EditorUtility.DisplayDialog("MeltFall",
-                "Slice 1 grey-box built.\n\nOpen Assets/Scenes/Meltfall_Play.unity (loaded now) and press Play.\nHold the mouse on the sand pillar to melt it; the gem drops and lands in the safe zone.",
-                "OK");
         }
 
         // ---- helpers ----------------------------------------------------------------------
@@ -177,6 +174,11 @@ namespace MeltFall.EditorTools
                 AssetDatabase.CreateAsset(asset, path);
                 configure(asset);
                 EditorUtility.SetDirty(asset);
+                AssetDatabase.SaveAssets();
+                // Re-load after saving: CreateAsset + SaveAssets can invalidate the in-memory
+                // instance, so wiring the scene with the original variable would assign a stale
+                // (fake-null) reference. The freshly loaded asset is a stable reference.
+                asset = AssetDatabase.LoadAssetAtPath<T>(path);
             }
             return asset;
         }
