@@ -67,6 +67,12 @@ namespace MeltFall
         /// <summary>Fired once when integrity reaches empty (before the shrink/clear completes).</summary>
         public event Action<MeltableMaterial> Emptied;
 
+        /// <summary>
+        /// Fired once per piece the moment it becomes cleared (integrity gone, removed from play).
+        /// Static so the arbiter can react to any support clearing without per-piece wiring.
+        /// </summary>
+        public static event Action<MeltableMaterial> Cleared;
+
         private void Awake()
         {
             integrity = def != null ? def.MaxIntegrity : 0f;
@@ -164,6 +170,9 @@ namespace MeltFall
                 isCleared = true;
                 isClearing = false;
                 gameObject.SetActive(false);
+
+                // Guarded by the isClearing/isCleared flags above: this block runs exactly once.
+                Cleared?.Invoke(this);
             }
         }
 

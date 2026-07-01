@@ -37,6 +37,7 @@ namespace MeltFall
         private LiquidSelectorState selectorState = LiquidSelectorState.Idle;
 
         private bool firing;
+        private bool firingBlocked;
         private float purgeTimer;
         private Vector3 aimDirection = Vector3.forward;
 
@@ -58,10 +59,12 @@ namespace MeltFall
         public bool IsPurging => purgeTimer > 0f;
 
         /// <summary>
-        /// True when the gun is allowed to fire: has a liquid, is not purging, and fuel is not empty.
+        /// True when the gun is allowed to fire: has a liquid, is not purging, fuel is not empty,
+        /// and firing is not gated (e.g. by the level being Resolved).
         /// </summary>
         public bool CanFire =>
-            currentLiquid != null && purgeTimer <= 0f && fuelTank != null && !fuelTank.IsEmpty;
+            currentLiquid != null && purgeTimer <= 0f && fuelTank != null && !fuelTank.IsEmpty
+            && !firingBlocked;
 
         /// <summary>Fired when the active liquid changes. Arg: new liquid.</summary>
         public event Action<LiquidDefinition> LiquidSelected;
@@ -82,6 +85,19 @@ namespace MeltFall
         public void SetTuning(LoopTuningConfig config)
         {
             tuning = config;
+        }
+
+        /// <summary>
+        /// Gates firing on/off (spec §6.5, §8). While blocked, <see cref="CanFire"/> is false and
+        /// <see cref="BeginFire"/> is inert. If blocking while a stream is live, it is ended first.
+        /// </summary>
+        public void SetFiringBlocked(bool blocked)
+        {
+            firingBlocked = blocked;
+            if (blocked && firing)
+            {
+                EndFire();
+            }
         }
 
         /// <summary>

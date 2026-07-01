@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,12 +42,18 @@ namespace MeltFall
         private SafeZone[] safeZoneArray;
         private HazardZone[] hazardZoneArray;
 
+        private Coroutine landingBeatRoutine;
+        private bool appPaused;
+
         /// <summary>The active loop tuning (level override if present, else the manager's).</summary>
         public LoopTuningConfig ActiveTuning =>
             levelDefinition != null && levelDefinition.Tuning != null ? levelDefinition.Tuning : loopTuning;
 
         /// <summary>Current top-level play state.</summary>
         public PlayState State => state;
+
+        /// <summary>True while the app is backgrounded / has lost focus (spec §9).</summary>
+        public bool IsAppPaused => appPaused;
 
         /// <summary>The shared fuel tank.</summary>
         public FuelTank Fuel => fuelTank;
@@ -80,6 +87,37 @@ namespace MeltFall
         private void OnDisable()
         {
             Unsubscribe();
+
+            // Never leave the game frozen if we are disabled mid-beat.
+            StopLandingBeat();
+        }
+
+        /// <summary>
+        /// App backgrounded/foregrounded (spec §9 Interruptions). Stops the stream on pause so fuel
+        /// can't drain while unattended; clears the paused flag on resume. Does not touch timeScale.
+        /// </summary>
+        private void OnApplicationPause(bool paused)
+        {
+            HandleInterruption(paused);
+        }
+
+        /// <summary>
+        /// Focus lost/gained (editor/desktop parity with <see cref="OnApplicationPause"/>). Treated
+        /// the same way: stop the stream when focus is lost.
+        /// </summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            HandleInterruption(!hasFocus);
+        }
+
+        private void HandleInterruption(bool interrupted)
+        {
+            appPaused = interrupted;
+
+            if (interrupted && liquidGun != null)
+            {
+                liquidGun.EndFire();
+            }
         }
 
         /// <summary>
@@ -119,7 +157,16 @@ namespace MeltFall
             {
                 liquidGun.SetFuelTank(fuelTank);
                 liquidGun.SetTuning(tuning);
+                liquidGun.SetFiringBlocked(false);
+
+                // Mirror the gun's selector state into the play state (event-driven, no per-frame work).
+                liquidGun.SelectorStateChanged -= OnSelectorStateChanged;
+                liquidGun.SelectorStateChanged += OnSelectorStateChanged;
             }
+
+            // React to any support piece clearing (spec §7): collapse begins.
+            MeltableMaterial.Cleared -= OnMeltableCleared;
+            MeltableMaterial.Cleared += OnMeltableCleared;
 
             if (cameraRig != null)
             {
@@ -151,6 +198,14 @@ namespace MeltFall
         private void Unsubscribe()
         {
             fuelTank.Emptied -= OnFuelEmptied;
+
+            if (liquidGun != null)
+            {
+                liquidGun.SelectorStateChanged -= OnSelectorStateChanged;
+            }
+
+            MeltableMaterial.Cleared -= OnMeltableCleared;
+
             for (int i = 0; i < gems.Count; i++)
             {
                 if (gems[i] != null)
@@ -172,6 +227,49 @@ namespace MeltFall
             StateChanged?.Invoke(state);
         }
 
+        /// <summary>
+        /// Mirrors the gun's selector state into the play state while the level is live. Only maps
+        /// while in one of {Surveying, Spraying, PurgeDelay} so it never overrides
+        /// <see cref="PlayState.CollapsingResolving"/> or <see cref="PlayState.Resolved"/>.
+        /// </summary>
+        private void OnSelectorStateChanged(LiquidSelectorState selectorState)
+        {
+            if (state != PlayState.Surveying
+                && state != PlayState.Spraying
+                && state != PlayState.PurgeDelay)
+            {
+                return;
+            }
+
+            switch (selectorState)
+            {
+                case LiquidSelectorState.ActiveFiring:
+                    SetState(PlayState.Spraying);
+                    break;
+                case LiquidSelectorState.Purging:
+                    SetState(PlayState.PurgeDelay);
+                    break;
+                case LiquidSelectorState.Idle:
+                default:
+                    SetState(PlayState.Surveying);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// A support piece cleared (spec §7): unless already resolved, the level enters the
+        /// collapse/resolve phase so falling bodies can settle.
+        /// </summary>
+        private void OnMeltableCleared(MeltableMaterial piece)
+        {
+            if (state == PlayState.Resolved)
+            {
+                return;
+            }
+
+            SetState(PlayState.CollapsingResolving);
+        }
+
         private void OnGemResolved(Gem gem, GemStatus status)
         {
             if (status == GemStatus.Landed)
@@ -184,11 +282,12 @@ namespace MeltFall
             }
         }
 
-        /// <summary>Records a safe landing and re-checks resolution.</summary>
+        /// <summary>Records a safe landing, plays the landing emphasis beat, and re-checks resolution.</summary>
         public void MarkLanded(Gem gem)
         {
             landedGems++;
             GemsChanged?.Invoke(landedGems, totalGems);
+            PlayLandingBeat();
             CheckResolution();
         }
 
@@ -196,7 +295,38 @@ namespace MeltFall
         public void MarkLost(Gem gem)
         {
             lostGems++;
+            GemsChanged?.Invoke(landedGems, totalGems);
             CheckResolution();
+        }
+
+        /// <summary>
+        /// Triggers a brief slow-mo emphasis on a safe landing (spec §6.4). No-op if there is no
+        /// active tuning. Re-entrancy safe: an in-flight beat is restarted so timeScale is always
+        /// driven by a single running coroutine.
+        /// </summary>
+        private void PlayLandingBeat()
+        {
+            LoopTuningConfig tuning = ActiveTuning;
+            if (tuning == null)
+            {
+                return;
+            }
+
+            if (landingBeatRoutine != null)
+            {
+                StopCoroutine(landingBeatRoutine);
+                landingBeatRoutine = null;
+            }
+
+            landingBeatRoutine = StartCoroutine(LandingBeat(tuning.LandingSlowMoScale, tuning.LandingSlowMoSeconds));
+        }
+
+        private IEnumerator LandingBeat(float scale, float seconds)
+        {
+            Time.timeScale = scale;
+            yield return new WaitForSecondsRealtime(seconds);
+            Time.timeScale = 1f;
+            landingBeatRoutine = null;
         }
 
         private void OnFuelEmptied()
@@ -255,6 +385,12 @@ namespace MeltFall
             resolved = true;
             SetState(PlayState.Resolved);
 
+            // Block all further firing once the level is resolved (spec §6.5, §8).
+            if (liquidGun != null)
+            {
+                liquidGun.SetFiringBlocked(true);
+            }
+
             if (landedGems >= 1)
             {
                 int stars = levelDefinition != null
@@ -281,6 +417,14 @@ namespace MeltFall
             lostGems = 0;
             resolved = false;
 
+            // Never leave a slow-mo beat stuck across a retry.
+            StopLandingBeat();
+
+            if (liquidGun != null)
+            {
+                liquidGun.SetFiringBlocked(false);
+            }
+
             for (int i = 0; i < gems.Count; i++)
             {
                 if (gems[i] != null)
@@ -296,6 +440,18 @@ namespace MeltFall
 
             SetState(PlayState.Surveying);
             GemsChanged?.Invoke(landedGems, totalGems);
+        }
+
+        /// <summary>Stops any running landing beat and restores normal time flow.</summary>
+        private void StopLandingBeat()
+        {
+            if (landingBeatRoutine != null)
+            {
+                StopCoroutine(landingBeatRoutine);
+                landingBeatRoutine = null;
+            }
+
+            Time.timeScale = 1f;
         }
     }
 }
