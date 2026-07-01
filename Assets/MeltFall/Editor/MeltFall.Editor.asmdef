@@ -2,7 +2,10 @@
     "name": "MeltFall.Editor",
     "rootNamespace": "MeltFall.EditorTools",
     "references": [
-        "MeltFall"
+        "MeltFall",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
