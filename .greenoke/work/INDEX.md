@@ -6,6 +6,6 @@ durable pointer to what's in flight.
 
 | Type | Slug | Status | Active Task |
 |---|---|---|---|
-| feature | meltfall-core-loop | plan ✅ (verify_spec + verify_plan PASS) | build next (`/greenoke:build`) |
+| feature | meltfall-core-loop | build — C# layer done (compiles clean, 0 errors) | in-Editor asset authoring + wiring (see build-status) |
 
-Durable [spec](meltfall-core-loop/feature-spec.md) + [plan](meltfall-core-loop/feature-plan.md) · design ref: `.greenoke/research/2026-07-01-meltfall-design.md`. Build order = 5 slices (Proto 1 core → SO data → Proto 2 matching → Proto 3 depth → HUD/feel polish).
+Durable [spec](meltfall-core-loop/feature-spec.md) + [plan](meltfall-core-loop/feature-plan.md) + [build status](meltfall-core-loop/build-status.md) · design ref: `.greenoke/research/2026-07-01-meltfall-design.md`. Full `Assets/MeltFall/` script layer (runtime + data + HUD) written and compiling; Editor-side assets (SOs, shader, prefabs, scene, input map) pending.
