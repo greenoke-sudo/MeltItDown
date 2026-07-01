@@ -546,6 +546,91 @@ namespace MeltFall.EditorTools
         }
 
         // ==================================================================================
+        // (f) Dissolve material
+        // ==================================================================================
+
+        private const string MaterialRoot = "Assets/MeltFall/Materials";
+        private const string DissolveShaderName = "MeltFall/Dissolve";
+        private const string DissolveMaterialPath = MaterialRoot + "/Dissolve.mat";
+
+        /// <summary>
+        /// Finds/creates the dissolve material and assigns it to every <see cref="MeltableMaterial"/>
+        /// in the CURRENTLY OPEN scene, wiring each piece's serialized 'targetRenderer'.
+        ///
+        /// Run this once per scene: open each content scene (Play / Match / Depth) and invoke the
+        /// menu item, since it only touches the active scene.
+        /// </summary>
+        [MenuItem("MeltFall/Apply Dissolve Material")]
+        public static void ApplyDissolve()
+        {
+            Shader shader = Shader.Find(DissolveShaderName);
+            if (shader == null)
+            {
+                Debug.LogError("[MeltFall] Shader '" + DissolveShaderName + "' not found. " +
+                               "Ensure Assets/MeltFall/Shaders/Dissolve.shader compiled.");
+                return;
+            }
+
+            EnsureFolder("Assets/MeltFall");
+            EnsureFolder(MaterialRoot);
+
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(DissolveMaterialPath);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, DissolveMaterialPath);
+                AssetDatabase.SaveAssets();
+                mat = AssetDatabase.LoadAssetAtPath<Material>(DissolveMaterialPath);
+            }
+            else if (mat.shader != shader)
+            {
+                mat.shader = shader;
+                EditorUtility.SetDirty(mat);
+            }
+
+            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            if (!scene.IsValid())
+            {
+                Debug.LogError("[MeltFall] No valid active scene to apply the dissolve material to.");
+                return;
+            }
+
+            int applied = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                // Generic GetComponentsInChildren<T> is unreliable in this project's tooling, so
+                // use the non-generic overload and cast.
+                Component[] components =
+                    roots[r].GetComponentsInChildren(typeof(MeltableMaterial), true);
+                for (int c = 0; c < components.Length; c++)
+                {
+                    var meltable = components[c] as MeltableMaterial;
+                    if (meltable == null) continue;
+
+                    Renderer renderer = meltable.GetComponent<Renderer>();
+                    if (renderer == null)
+                    {
+                        renderer = meltable.GetComponentInChildren<Renderer>();
+                    }
+                    if (renderer == null) continue;
+
+                    renderer.sharedMaterial = mat;
+                    SetRef(meltable, "targetRenderer", renderer);
+                    applied++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[MeltFall] Applied dissolve material to " + applied +
+                      " MeltableMaterial piece(s) in scene '" + scene.name + "'. " +
+                      "Run once per scene (Play / Match / Depth).");
+        }
+
+        // ==================================================================================
         // HUD instantiation helper
         // ==================================================================================
 
