@@ -27,6 +27,11 @@ namespace MeltFall
         [Tooltip("Physics layers the melt cone can hit. Default: everything.")]
         [SerializeField] private LayerMask meltMask = ~0;
 
+        [Tooltip("Liquids this gun can use (also what the on-screen selector lists). The first " +
+                 "entry is auto-selected on start when nothing is selected — enough to play a " +
+                 "single-liquid grey-box with no HUD.")]
+        [SerializeField] private LiquidDefinition[] availableLiquids = new LiquidDefinition[0];
+
         private FuelTank fuelTank;
         private LiquidDefinition currentLiquid;
         private LiquidSelectorState selectorState = LiquidSelectorState.Idle;
@@ -39,6 +44,9 @@ namespace MeltFall
 
         /// <summary>Currently selected liquid (may be null before selection).</summary>
         public LiquidDefinition CurrentLiquid => currentLiquid;
+
+        /// <summary>The liquids this gun can use (drives the on-screen selector).</summary>
+        public LiquidDefinition[] AvailableLiquids => availableLiquids;
 
         /// <summary>Current selector/firing state.</summary>
         public LiquidSelectorState SelectorState => selectorState;
@@ -139,6 +147,19 @@ namespace MeltFall
 
             firing = false;
             SetSelectorState(purgeTimer > 0f ? LiquidSelectorState.Purging : LiquidSelectorState.Idle);
+        }
+
+        private void Start()
+        {
+            // Auto-select the first available liquid (no purge) so a single-liquid grey-box is
+            // playable without the on-screen selector. A real level lets the player pick.
+            if (currentLiquid == null && availableLiquids != null && availableLiquids.Length > 0
+                && availableLiquids[0] != null)
+            {
+                currentLiquid = availableLiquids[0];
+                LiquidSelected?.Invoke(currentLiquid);
+                SetSelectorState(LiquidSelectorState.Idle);
+            }
         }
 
         private void FixedUpdate()
