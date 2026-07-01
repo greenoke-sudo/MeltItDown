@@ -228,7 +228,10 @@ namespace MeltFall
                 sphereCenter, sphereRadius, overlapBuffer, meltMask, QueryTriggerInteraction.Ignore);
 
             float cosHalfAngle = Mathf.Cos(tuning.ConeHalfAngleDegrees * Mathf.Deg2Rad);
-            float meltPerTick = currentLiquid.MeltPower * dt;
+            // Per-tick base amount = the fixed timestep. MeltableMaterial.ApplyMelt multiplies this
+            // by the liquid's MeltPower, so integrity drains at ~MeltPower per second (do NOT
+            // pre-multiply by MeltPower here or it is applied twice and pieces vanish instantly).
+            float meltPerTick = dt;
             float reachSqr = reach * reach;
 
             for (int i = 0; i < hitCount; i++)
