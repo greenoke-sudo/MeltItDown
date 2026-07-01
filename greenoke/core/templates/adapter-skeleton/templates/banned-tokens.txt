@@ -1,0 +1,6 @@
+# Adapter banned tokens
+# One token (or regex fragment) per line. Project nouns the spec/plan verifier appends to
+# the core cross-section banned-token list. Lines starting with # are comments.
+# Add your tool names, subsystem names, and file roots here, e.g.:
+#   my_subsystem
+#   my-tool

@@ -1,0 +1,8 @@
+{
+  "qa_iteration_cap": 3,
+  "autonomy": "full",
+  "writer_count": 2,
+  "scout_count": 2,
+  "require_clean_git_before_build": true,
+  "stale_system_guard": true
+}

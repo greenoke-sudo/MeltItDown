@@ -1,0 +1,38 @@
+{
+  "greenoke_version": ">=0.1.0",
+  "project": {
+    "name": "<project-slug>",
+    "display": "<Human Readable Name>",
+    "language": "<language>",
+    "repo_root": "."
+  },
+  "inputs": {
+    "spec": {
+      "dir": "greenoke/adapter/input/spec",
+      "kind": "markdown-brief",
+      "required": true
+    }
+  },
+  "capability_provider": {
+    "kind": "cli",
+    "launch": ["<command to start or invoke the provider>"],
+    "capabilities": ["inspect", "build", "verify", "screenshot", "health"]
+  },
+  "templates": {
+    "spec_fragments": "greenoke/adapter/templates/spec.fragments.md",
+    "plan_fragments": "greenoke/adapter/templates/plan.fragments.md"
+  },
+  "rules": {
+    "dir": "greenoke/adapter/rules",
+    "auto_load": true
+  },
+  "knowledge_base": {
+    "dir": ".greenoke"
+  },
+  "run_dir": ".greenoke-run",
+  "banned_tokens_source": "greenoke/adapter/templates/banned-tokens.txt",
+  "verification": {
+    "build_smoke": "<command that compiles/tests/lints the project>",
+    "artifact_validator": "greenoke/adapter/provider/validate_artifact.<ext>"
+  }
+}

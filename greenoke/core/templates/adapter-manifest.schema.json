@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://greenoke.dev/schemas/adapter-manifest.schema.json",
+  "title": "greenoke.adapter.json",
+  "description": "The contract a per-project adapter satisfies. The project-agnostic core resolves every path and behavior through this manifest at each skill's Phase 0. There are no project nouns in the core — only the keys defined here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "greenoke_version",
+    "project",
+    "inputs",
+    "capability_provider",
+    "templates",
+    "rules",
+    "knowledge_base",
+    "run_dir",
+    "verification"
+  ],
+  "properties": {
+    "greenoke_version": {
+      "type": "string",
+      "description": "Core version constraint this adapter targets (semver range).",
+      "pattern": "^(>=|<=|==|>|<|\\^|~)?\\s*\\d+\\.\\d+\\.\\d+.*$"
+    },
+    "project": {
+      "type": "object",
+      "description": "Identity of the project this adapter belongs to.",
+      "additionalProperties": false,
+      "required": ["name", "language", "repo_root"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Machine name (slug). Used in commit subjects and run-id prefixes.",
+          "minLength": 1
+        },
+        "display": {
+          "type": "string",
+          "description": "Human-readable display name."
+        },
+        "language": {
+          "type": "string",
+          "description": "Primary implementation language (free-form; e.g. 'python', 'csharp', 'rust', 'typescript'). The core does not branch on this — it is metadata the researcher and writers read.",
+          "minLength": 1
+        },
+        "repo_root": {
+          "type": "string",
+          "description": "Repository root relative to the manifest location. Usually '.'.",
+          "minLength": 1
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Where feature briefs and other pipeline inputs live, and how to interpret them.",
+      "additionalProperties": false,
+      "required": ["spec"],
+      "properties": {
+        "spec": {
+          "type": "object",
+          "description": "The spec-phase input source. The spec skill enumerates this directory per 'kind'.",
+          "additionalProperties": false,
+          "required": ["dir", "kind"],
+          "properties": {
+            "dir": {
+              "type": "string",
+              "description": "Directory holding feature briefs, relative to repo_root.",
+              "minLength": 1
+            },
+            "kind": {
+              "type": "string",
+              "description": "How the skill interprets the input set. Adapter-defined; the core enforces presence, the adapter defines the shape.",
+              "examples": ["markdown-brief", "flow-export", "structured-yaml"]
+            },
+            "required": {
+              "type": "boolean",
+              "description": "If true, the spec skill hard-fails when the directory is empty. Default true.",
+              "default": true
+            }
+          }
+        }
+      }
+    },
+    "capability_provider": {
+      "type": "object",
+      "description": "How agents drive the project's live system. Implements the verb contract in contracts/capability-provider.md.",
+      "additionalProperties": false,
+      "required": ["kind", "capabilities"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Transport by which agents reach the provider.",
+          "enum": ["mcp", "cli", "library", "none"]
+        },
+        "launch": {
+          "type": "array",
+          "description": "Command (argv form) that starts/serves the provider, when applicable. Omitted for kind 'none'.",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "capabilities": {
+          "type": "array",
+          "description": "Which contract verbs this provider implements. 'health' is required for stale_system_guard to function.",
+          "items": {
+            "type": "string",
+            "enum": ["inspect", "build", "verify", "screenshot", "health"]
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        }
+      }
+    },
+    "templates": {
+      "type": "object",
+      "description": "Adapter template fragments injected into the core spec/plan templates at the documented INJECT points.",
+      "additionalProperties": false,
+      "properties": {
+        "spec_fragments": {
+          "type": "string",
+          "description": "Path to domain spec sections injected into feature-spec.core.md."
+        },
+        "plan_fragments": {
+          "type": "string",
+          "description": "Path to domain plan sections injected into feature-plan.core.md."
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "description": "Project convention rules, auto-loaded by glob.",
+      "additionalProperties": false,
+      "required": ["dir"],
+      "properties": {
+        "dir": {
+          "type": "string",
+          "description": "Directory of rule markdown files, relative to repo_root.",
+          "minLength": 1
+        },
+        "auto_load": {
+          "type": "boolean",
+          "description": "Whether rules are auto-loaded. Default true.",
+          "default": true
+        }
+      }
+    },
+    "knowledge_base": {
+      "type": "object",
+      "description": "The durable, committed institutional-memory root (the .greenoke/ schema).",
+      "additionalProperties": false,
+      "required": ["dir"],
+      "properties": {
+        "dir": {
+          "type": "string",
+          "description": "Knowledge-base root, relative to repo_root. Conventionally '.greenoke'.",
+          "minLength": 1
+        }
+      }
+    },
+    "run_dir": {
+      "type": "string",
+      "description": "Ephemeral, gitignored per-run scaffolding root. Conventionally '.greenoke-run'. Runs write under <run_dir>/<run-id>/{spec,plan,build}/.",
+      "minLength": 1
+    },
+    "banned_tokens_source": {
+      "type": "string",
+      "description": "Optional path to an adapter-supplied banned-token list (project nouns) appended to the core cross-section impl-leakage list. Absent → core list only."
+    },
+    "verification": {
+      "type": "object",
+      "description": "Commands and validators the build/probe phases run to prove the work.",
+      "additionalProperties": false,
+      "required": ["build_smoke"],
+      "properties": {
+        "build_smoke": {
+          "type": "string",
+          "description": "Command the probe runs as the structural smoke check (compile/test/lint). Adapter-defined; the core runs it verbatim.",
+          "minLength": 1
+        },
+        "artifact_validator": {
+          "type": "string",
+          "description": "Optional path to a project script that validates a produced artifact (the proof-of-life the provider's verify() drives)."
+        }
+      }
+    }
+  }
+}

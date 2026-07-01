@@ -1,0 +1,12 @@
+{
+  "greenoke_version": ">=0.1.0",
+  "project": { "name": "meltitdown", "display": "MeltItDown", "language": "csharp", "repo_root": "." },
+  "inputs": { "spec": { "dir": "greenoke/adapter/input/spec", "kind": "markdown-brief", "required": true } },
+  "capability_provider": { "kind": "mcp", "launch": ["python3", "greenoke/adapter/provider/server.py"], "capabilities": ["inspect", "build", "verify", "screenshot", "health"] },
+  "templates": { "spec_fragments": "greenoke/adapter/templates/spec.fragments.md", "plan_fragments": "greenoke/adapter/templates/plan.fragments.md" },
+  "rules": { "dir": "greenoke/adapter/rules", "auto_load": true },
+  "knowledge_base": { "dir": ".greenoke" },
+  "run_dir": ".greenoke-run",
+  "banned_tokens_source": "greenoke/adapter/templates/banned-tokens.txt",
+  "verification": { "build_smoke": "bash greenoke/adapter/scripts/build-smoke.sh", "artifact_validator": "greenoke/adapter/provider/validate_artifact.py" }
+}

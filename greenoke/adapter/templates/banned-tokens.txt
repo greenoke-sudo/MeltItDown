@@ -1,0 +1,22 @@
+# Adapter banned tokens — MeltItDown
+# One token (or regex fragment) per line. Project nouns the spec/plan verifier appends
+# to the core cross-section banned-token list, so foreign-domain vocabulary never leaks
+# into MeltItDown specs / plans. Lines starting with # are comments.
+
+# --- Cross-domain leakage guard ---
+# greenoke was ported here FROM the sibling WordGame project. These WordGame-specific
+# nouns must NOT appear in MeltItDown specs/plans (they'd signal copied, unadapted text).
+wordgame
+letter grid
+BlockNode
+GridManager
+SolvableLevelGenerator
+Leap tween
+TweenAdmin
+UniTask
+Odin
+
+# --- Forbidden tech for MeltItDown (add as decided; using these becomes an acceptance failure) ---
+Resources.Load
+# DOTween        # uncomment once the project's tween system is chosen and this is banned
+# LeanTween

@@ -1,0 +1,10 @@
+{
+  "//": "greenoke capability-provider MCP config — opt-in, launcher-only. NOT a repo-wide .mcp.json: greenoke's launcher passes this to the Claude CLI via `--mcp-config`, so the provider is live ONLY when greenoke is explicitly launched, never in a normal session. The command is resolved relative to the launch cwd (the MeltItDown repo root). Mirrors capability_provider.launch in greenoke.adapter.json; the `mcp` subcommand selects the stdio MCP transport. The provider talks to the running Unity Editor over the MCP-for-Unity bridge (localhost TCP), so the Editor must be open with the bridge connected.",
+  "mcpServers": {
+    "greenoke-provider": {
+      "command": "python3",
+      "args": ["greenoke/adapter/provider/server.py", "mcp"],
+      "env": {}
+    }
+  }
+}
