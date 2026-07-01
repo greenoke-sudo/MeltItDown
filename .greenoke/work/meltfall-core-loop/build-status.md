@@ -1,6 +1,23 @@
 # Build status — meltfall-core-loop
 
-Build driven in Cowork with a **console-error gate** (per user: no live provider verify()/screenshots; in-Editor testing done manually later). Unity 6000.0.62f1 bridge connected; every pass compiled with **0 errors, 0 warnings**.
+Build driven in Cowork. Unity 6000.0.62f1 MCP bridge added to MeltItDown and connected
+(instance `MeltItDown@d0f67c42`). Full MeltFall code compiles in the real project with
+**0 errors, 0 warnings**.
+
+## Slice 1 (Proto 1 grey-box) — PLAYABLE ✅
+Scaffolded via the `MeltFall ▸ Build Slice 1 (Grey-box)` menu item and verified live:
+- Assets: Water/Sand/LoopTuning/Level_01 created + wired (all asset refs resolve).
+- Scene `Assets/Scenes/Meltfall_Play.unity`: camera+rig, light, ground, safe-zone volume,
+  sand support (meltable), gem, liquid gun (auto-selects Water), level manager, input.
+- Play-mode smoke test: LevelManager State=Surveying, TotalGems=1; LiquidGun
+  CurrentLiquid=Water, CanFire=true; **0 MeltFall runtime errors**. Hold-to-melt the
+  pillar drops the gem into the safe zone (win) — the core loop is live.
+- Earlier "compiles clean" checks had actually hit a different open project (`throwit`);
+  compilation + play are now genuinely verified against MeltItDown.
+
+## Next: Slices 2–5
+Matching puzzle (multi-liquid), SO-authoring polish, depth (layers/hazards/stars), HUD wiring.
+
 
 ## Code — DONE (compiles clean)
 Full C# layer under `Assets/MeltFall/` (namespace `MeltFall` / `MeltFall.UI`):
