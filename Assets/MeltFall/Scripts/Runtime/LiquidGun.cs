@@ -217,23 +217,38 @@ namespace MeltFall
         private void ApplyConeMelt(float dt)
         {
             Transform origin = nozzle != null ? nozzle : transform;
-            float reach = tuning.ConeReach;
             Vector3 originPos = origin.position;
+            float reach = tuning.ConeReach;
 
-            // Sample a sphere at the cone's far region, then filter by cone half-angle.
-            Vector3 sphereCenter = originPos + aimDirection * (reach * 0.5f);
-            float sphereRadius = reach * 0.5f;
+            // The stream hits the FIRST surface along the aim, so you melt exactly what you point
+            // at — and a layered shell is excavated outer-first (the ray hits the shell; once it's
+            // gone the next tick's ray reaches the piece behind it).
+            RaycastHit hit;
+            if (!Physics.Raycast(originPos, aimDirection, out hit, reach, meltMask, QueryTriggerInteraction.Ignore))
+            {
+                return; // aiming at empty space in range — nothing to melt (fuel still burns for holding)
+            }
 
-            int hitCount = Physics.OverlapSphereNonAlloc(
-                sphereCenter, sphereRadius, overlapBuffer, meltMask, QueryTriggerInteraction.Ignore);
-
-            float cosHalfAngle = Mathf.Cos(tuning.ConeHalfAngleDegrees * Mathf.Deg2Rad);
             // Per-tick base amount = the fixed timestep. MeltableMaterial.ApplyMelt multiplies this
             // by the liquid's MeltPower, so integrity drains at ~MeltPower per second (do NOT
             // pre-multiply by MeltPower here or it is applied twice and pieces vanish instantly).
             float meltPerTick = dt;
-            float reachSqr = reach * reach;
 
+            MeltableMaterial primary = hit.collider.GetComponentInParent<MeltableMaterial>();
+            if (primary != null && !primary.IsCleared)
+            {
+                primary.ApplyMelt(currentLiquid, meltPerTick); // ApplyMelt handles matched vs wrong-liquid
+            }
+
+            // Small splash around the impact so the stream affects a little area, not one pivot.
+            float splash = tuning.SprayRadius;
+            if (splash <= 0f)
+            {
+                return;
+            }
+
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                hit.point, splash, overlapBuffer, meltMask, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < hitCount; i++)
             {
                 Collider col = overlapBuffer[i];
@@ -243,25 +258,11 @@ namespace MeltFall
                 }
 
                 MeltableMaterial piece = col.GetComponentInParent<MeltableMaterial>();
-                if (piece == null || piece.IsCleared)
+                if (piece == null || piece.IsCleared || piece == primary)
                 {
                     continue;
                 }
 
-                Vector3 toTarget = piece.transform.position - originPos;
-                float distSqr = toTarget.sqrMagnitude;
-                if (distSqr > reachSqr || distSqr <= 0f)
-                {
-                    continue;
-                }
-
-                Vector3 dir = toTarget / Mathf.Sqrt(distSqr);
-                if (Vector3.Dot(dir, aimDirection) < cosHalfAngle)
-                {
-                    continue;
-                }
-
-                // ApplyMelt handles matched vs wrong-liquid internally.
                 piece.ApplyMelt(currentLiquid, meltPerTick);
             }
         }

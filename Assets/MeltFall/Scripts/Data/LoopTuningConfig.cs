@@ -36,8 +36,11 @@ namespace MeltFall
         [Tooltip("Half-angle of the melt cone in degrees.")]
         [SerializeField] private float coneHalfAngleDegrees = 12f;
 
-        [Tooltip("Maximum reach of the melt cone (world units).")]
+        [Tooltip("Maximum reach of the melt stream (world units).")]
         [SerializeField] private float coneReach = 6f;
+
+        [Tooltip("Splash radius (world units) around the stream's impact point. 0 = only the exact piece the stream hits.")]
+        [SerializeField] private float sprayRadius = 0.6f;
 
         [Header("Gem fall guidance")]
         [Tooltip("Additional angular drag applied to gems to bias clean, readable falls.")]
@@ -66,6 +69,7 @@ namespace MeltFall
         public float SettleTime => settleTime;
         public float ConeHalfAngleDegrees => coneHalfAngleDegrees;
         public float ConeReach => coneReach;
+        public float SprayRadius => sprayRadius;
         public float GemAngularDragBoost => gemAngularDragBoost;
         public float CameraTiltDegrees => cameraTiltDegrees;
         public float ParallaxMax => parallaxMax;
