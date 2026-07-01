@@ -6,4 +6,6 @@ durable pointer to what's in flight.
 
 | Type | Slug | Status | Active Task |
 |---|---|---|---|
-| _(add work here)_ | | | |
+| feature | meltfall-core-loop | spec ✅ (verify_spec PASS) | plan next (`/greenoke:plan`) |
+
+Durable spec: [`.greenoke/work/meltfall-core-loop/feature-spec.md`](meltfall-core-loop/feature-spec.md) · design ref: `.greenoke/research/2026-07-01-meltfall-design.md`
