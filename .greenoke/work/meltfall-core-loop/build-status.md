@@ -15,8 +15,21 @@ Scaffolded via the `MeltFall ▸ Build Slice 1 (Grey-box)` menu item and verifie
 - Earlier "compiles clean" checks had actually hit a different open project (`throwit`);
   compilation + play are now genuinely verified against MeltItDown.
 
-## Next: Slices 2–5
-Matching puzzle (multi-liquid), SO-authoring polish, depth (layers/hazards/stars), HUD wiring.
+## Slices 2–5 — BUILT & smoke-tested ✅ (commit d0c1b79)
+- **Slice 2 data:** Water/Acid/Solvent/Heat liquids + Sand/Metal/Stone/Ice materials (matching table §4).
+- **HUD:** `Prefabs/HUD.prefab` (fuel gauge, gem tracker, liquid selector, aim indicator, result panel) + `Prefabs/LiquidButton.prefab` + runtime `SceneBootstrap` binder; EventSystem via new Input System. TMP Essential Resources imported.
+- **Slice 3 — `Meltfall_Match.unity` (Proto 2):** 3 liquids [Water,Acid,Solvent]; 2-layer excavation (MetalShell→acid, StonePillar→solvent) → drop gem. Smoke: State=Surveying, TotalGems=1, defs wired, 0 errors.
+- **Slice 4 — `Meltfall_Depth.unity` (Proto 3):** 4 liquids; 3 gems; safe + hazard kill-floor zones; 4 meltable layers (StonePillar_A, SandPillar_B, IceColumn_C, MetalBrace_C); star thresholds 1/2/3. Smoke: TotalGems=3, zones+meltables+gems present, 0 errors.
+- **Editor builders:** menu `MeltFall/Build Everything` (+ per-slice items) regenerate assets/scenes.
+
+### Hard-won gotchas (for future Editor automation)
+- Load SO assets **after** `OpenScene` — opening a scene reimports assets and fake-nulls pre-loaded references (root cause of null wiring).
+- Don't call `AssetDatabase.Refresh()` right before `LoadAssetAtPath` — the reimport makes the load return null mid-import.
+- In the `execute_code` CodeDom (C# 6) sandbox: no lambdas/local-functions/generics reliably; use non-generic `GetComponent(typeof(T))` / `GetComponent("TypeName")`.
+- New files need a full asset refresh (`scope=all`) to import before they compile into the assembly.
+
+## Remaining (future features, not this slice)
+Playtest for feel; run greenoke's cold QA gate + build_verdict across slices; then juice (VFX/dissolve shader/audio/slow-mo), world map/meta, monetization.
 
 
 ## Code — DONE (compiles clean)
