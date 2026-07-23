@@ -132,4 +132,6 @@ else
   echo "              proof-of-life will be unavailable until a provider mcp.json exists)" >&2
 fi
 
-exec claude "${CLAUDE_ARGS[@]}" "${PASSTHRU[@]}"
+# Empty-array-safe under `set -u` on macOS's bash 3.2 (bare "${PASSTHRU[@]}" on an
+# empty array throws "unbound variable" there).
+exec claude "${CLAUDE_ARGS[@]}" ${PASSTHRU[@]+"${PASSTHRU[@]}"}

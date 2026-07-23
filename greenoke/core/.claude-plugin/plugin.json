@@ -1,5 +1,5 @@
 {
   "name": "greenoke",
   "description": "Greenoke — portable agentic engineering core: a project-agnostic spec → plan → build pipeline driven entirely by a per-project adapter manifest. Pointed at any adapter, the same core means the same thing.",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

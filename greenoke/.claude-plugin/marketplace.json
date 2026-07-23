@@ -1,0 +1,16 @@
+{
+  "name": "greenoke-local",
+  "owner": {
+    "name": "Greenoke"
+  },
+  "metadata": {
+    "description": "Local marketplace wrapping the greenoke core so /greenoke:* skills load in any session (project-scoped install). The capability-provider MCP still rides only via core/tooling/launch.sh."
+  },
+  "plugins": [
+    {
+      "name": "greenoke",
+      "source": "./core",
+      "description": "Greenoke spec → plan → build pipeline (skills + agents). Adapter manifest resolves from the repo cwd."
+    }
+  ]
+}

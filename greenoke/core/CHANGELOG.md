@@ -2,6 +2,15 @@
 
 All notable changes to greenoke-core. Bump `.claude-plugin/plugin.json` `version` on every iteration and add an entry here.
 
+## 0.2.0 — QA absorbs portable code-review protocols
+
+The `qa` agent now gates on code quality as well as spec conformance, folding in the portable engineering-review protocols (generalized, project-agnostic — no external tooling assumptions).
+
+- `agents/qa.md` — added a **six-dimension code-quality audit** (correctness/SOLID, architecture & conventions, performance, configurability, observability, naming) on the changed source, alongside the existing spec-conformance verification.
+- Added **judge-grade finding validation**: the full-context rule (never review from the diff alone), fix-validation (a real defect paired with a broken fix is still bad guidance), evidence tags (`verified at file:line` vs `speculative`), and a don't-invent-issues / drop-false-positives posture.
+- Real code defects now map to **BLOCKING**; quality suggestions to **MINOR** — same fail-closed verdict trichotomy (PASS / PASS_WITH_DEFERRALS / NEEDS_REVIEW) and `stale_system_guard`.
+- Renamed qa's `## Rules` → `## Hard rules`.
+
 ## 0.1.0 — M0 scaffold
 
 Initial project-agnostic core skeleton. Loadable, coherent, manifest-driven.
